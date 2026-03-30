@@ -1,53 +1,52 @@
 package com.aman.project.airBnbApp.entity;
 
-
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
 @Table
 public class Room {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    // owner side
-    // when you create a room you have to specify the hotel
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "hotel_id", nullable = false)
-    private Hotel hotel;
+	// owner side
+	// when you create a room you have to specify the hotel
 
-    @Column(nullable = false)
-    private String type;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "hotel_id", nullable = false)
+	private Hotel hotel;
 
-    @Column(nullable = false, precision = 10, scale = 2) // rs 234.45 not 234.567
-    private BigDecimal basePrice;
+	@Column(nullable = false)
+	private String type;
 
-    @Column(columnDefinition = "TEXT[]")// read this and add it to the notes
-    private String[] photos;
+	@Column(nullable = false, precision = 10, scale = 2) // rs 234.45 not 234.567
+	private BigDecimal basePrice;
 
-    @Column(columnDefinition = "TEXT[]") // {"WIFI", "SWIMMING POOL", "..."}
-    private String amenities;
+	@Column(columnDefinition = "TEXT[]") // read this and add it to the notes
+	private String[] photos;
 
-    @Column(nullable = false)
-    private Integer totalCount;
+	@Column(columnDefinition = "TEXT[]") // {"WIFI", "SWIMMING POOL", "..."}
+	private String[] amenities;
 
-    @Column(nullable = false)
-    private Integer capacity;
+	@Column(nullable = false)
+	private Integer totalCount;
 
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+	@Column(nullable = false)
+	private Integer capacity;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+	@CreationTimestamp
+	@Column(updatable = false)
+	private LocalDateTime createdAt;
+
+	@UpdateTimestamp
+	private LocalDateTime updatedAt;
 }
