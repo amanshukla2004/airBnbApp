@@ -43,6 +43,9 @@ public class Inventory {
 	@Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
 	private Integer bookedCount;
 
+	@Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+	private Integer reservedCount; //"not-null property references a null or transient value for entity com.aman.project.airBnbApp.entity.Inventory.reservedCount"
+
 	@Column(nullable = false)
 	private Integer totalCount;
 

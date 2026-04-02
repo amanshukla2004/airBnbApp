@@ -1,11 +1,15 @@
 package com.aman.project.airBnbApp.service;
 
 import com.aman.project.airBnbApp.dto.HotelDto;
+import com.aman.project.airBnbApp.dto.HotelInfoDto;
+import com.aman.project.airBnbApp.dto.RoomDto;
 import com.aman.project.airBnbApp.entity.Hotel;
 import com.aman.project.airBnbApp.entity.Room;
 import com.aman.project.airBnbApp.exception.ResourceNotFoundException;
 import com.aman.project.airBnbApp.repository.HotelRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -63,7 +67,7 @@ public class HotelServiceImpl implements HotelService {
 			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + id));
 		hotelRepository.deleteById(id);
 		for (Room room : hotel.getRooms()) {
-			inventoryService.deleteFutureInventories(room);
+			inventoryService.deleteAllInventories(room);
 		}
 	}
 
@@ -80,5 +84,18 @@ public class HotelServiceImpl implements HotelService {
 		for (Room room : hotel.getRooms()) {
 			inventoryService.initialiseRoomForAYear(room);
 		}
+	}
+
+	@Override
+	public HotelInfoDto getHotelInfoById(Long hotelId) {
+		Hotel hotel = hotelRepository
+			.findById(hotelId)
+			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + hotelId));
+		List<RoomDto> rooms = hotel
+			.getRooms()
+			.stream()
+			.map(element -> modelMapper.map(element, RoomDto.class))
+			.collect(Collectors.toList());
+		return new HotelInfoDto(modelMapper.map(hotel, HotelDto.class), rooms);
 	}
 }
