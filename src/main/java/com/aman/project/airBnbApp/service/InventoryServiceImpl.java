@@ -1,10 +1,12 @@
 package com.aman.project.airBnbApp.service;
 
 import com.aman.project.airBnbApp.dto.HotelDto;
+import com.aman.project.airBnbApp.dto.HotelPriceDto;
 import com.aman.project.airBnbApp.dto.HotelSearchRequest;
 import com.aman.project.airBnbApp.entity.Hotel;
 import com.aman.project.airBnbApp.entity.Inventory;
 import com.aman.project.airBnbApp.entity.Room;
+import com.aman.project.airBnbApp.repository.HotelMinPriceRepository;
 import com.aman.project.airBnbApp.repository.InventoryRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,6 +27,8 @@ public class InventoryServiceImpl implements InventoryService {
 	private final ModelMapper modelMapper;
 
 	private final InventoryRepository inventoryRepository;
+
+	private final HotelMinPriceRepository hotelMinPriceRepository;
 
 	@Override
 	public void initialiseRoomForAYear(Room room) {
@@ -58,7 +62,7 @@ public class InventoryServiceImpl implements InventoryService {
 	}
 
 	@Override
-	public Page<HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
+	public Page<HotelPriceDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
 		log.info(
 			"Searching hotels for {} city, from {} to {}",
 			hotelSearchRequest.getCity(),
@@ -71,6 +75,18 @@ public class InventoryServiceImpl implements InventoryService {
 
 		long dateCount =
 			ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate()) + 1;
+
+		// business logic - 90 days
+		Page<HotelPriceDto> hotelPage = hotelMinPriceRepository.findHotelWithAvailableInventory(
+			hotelSearchRequest.getCity(),
+			hotelSearchRequest.getStartDate(),
+			hotelSearchRequest.getEndDate(),
+			hotelSearchRequest.getRoomsCount(),
+			dateCount,
+			pageable
+		);
+		return hotelPage;
+		/*
 		Page<Hotel> hotelPage = inventoryRepository.findHotelWithAvailableInventory(
 			hotelSearchRequest.getCity(),
 			hotelSearchRequest.getStartDate(),
@@ -80,6 +96,7 @@ public class InventoryServiceImpl implements InventoryService {
 			pageable
 		);
 		return hotelPage.map(element -> modelMapper.map(element, HotelDto.class));
+		 */
 	}
 }
 /*
