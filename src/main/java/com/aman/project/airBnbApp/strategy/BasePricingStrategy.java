@@ -4,7 +4,6 @@ import com.aman.project.airBnbApp.entity.Inventory;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 
-@Service
 public class BasePricingStrategy implements PricingStrategy {
 
 	@Override

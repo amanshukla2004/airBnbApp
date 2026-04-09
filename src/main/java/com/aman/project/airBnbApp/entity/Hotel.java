@@ -1,5 +1,6 @@
 package com.aman.project.airBnbApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,6 +51,7 @@ public class Hotel {
 	@ManyToOne
 	private User owner;
 
+	@JsonIgnore
 	@OneToMany(mappedBy = "hotel")
 	private List<Room> rooms;
 }

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -13,6 +14,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 public class HotelMinPrice {
 
 	@Id
@@ -36,4 +38,9 @@ public class HotelMinPrice {
 
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
+
+	public HotelMinPrice(Hotel hotel, LocalDate date) {
+		this.hotel = hotel;
+		this.date = date;
+	}
 }
