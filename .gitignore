@@ -1,10 +1,46 @@
-HELP.md
+### Build Tools (Maven/Gradle) ###
 target/
+build/
+out/
 .mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+bin/
 
-### STS ###
+### Logs & Temp ###
+*.log
+logs/
+temp/
+*.tmp
+
+### OS Specific ###
+.DS_Store
+Thumbs.db
+desktop.ini
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+atlassian-ide-plugin.xml
+# Ignore the out folder created by IntelliJ
+
+
+### Local Configuration (CRITICAL) ###
+# Do NOT commit your local passwords or API keys!
+application-local.properties
+application-dev.properties
+application.properties
+application.yml
+.env
+*.jks
+*.p12
+
+### VS Code ###
+.vscode/
+*.code-workspace
+.history/
+
+### STS / Eclipse ###
 .apt_generated
 .classpath
 .factorypath
@@ -12,22 +48,3 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/

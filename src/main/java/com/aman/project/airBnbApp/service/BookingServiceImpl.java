@@ -6,6 +6,7 @@ import com.aman.project.airBnbApp.dto.GuestDto;
 import com.aman.project.airBnbApp.entity.*;
 import com.aman.project.airBnbApp.entity.enums.BookingStatus;
 import com.aman.project.airBnbApp.exception.ResourceNotFoundException;
+import com.aman.project.airBnbApp.exception.UnAuthorisedException;
 import com.aman.project.airBnbApp.repository.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,7 +84,7 @@ public class BookingServiceImpl implements BookingService {
 			.build();
 
 		booking = bookingRepository.save(booking);
-		log.info("Booking has been saved successfully {}", booking);
+		log.info("Booking has been saved successfully : {}", booking);
 		return modelMapper.map(booking, BookingDto.class);
 	}
 
@@ -93,6 +95,14 @@ public class BookingServiceImpl implements BookingService {
 		Booking booking = bookingRepository
 			.findById(bookingId)
 			.orElseThrow(() -> new ResourceNotFoundException("Booking not found with id" + bookingId));
+		//
+		User user = getCurrentUser();
+		if (!user.equals(booking.getUser())) {
+			//
+			throw new UnAuthorisedException("Booking does not belong to this user with ID: " + user.getId());
+			//
+		}
+		//
 		if (hasBookingExpired(booking)) {
 			throw new IllegalStateException("Booking has expired");
 		}
@@ -102,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
 
 		for (GuestDto guestDto : guestDtoList) {
 			Guest guest = modelMapper.map(guestDto, Guest.class);
-			guest.setUser(getCurrentUser());
+			guest.setUser(user);
 			guest = guestRepository.save(guest);
 			booking.getGuests().add(guest);
 		}
@@ -118,9 +128,7 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	public User getCurrentUser() {
-		// creating new user - change when spring Scurity
-		User user = new User();
-		user.setId(1L); // TODO: REMOVE DUMMY USER
+		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		return user;
 	}
 }
