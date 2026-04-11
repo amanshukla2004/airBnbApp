@@ -4,6 +4,7 @@ import com.aman.project.airBnbApp.entity.Hotel;
 import com.aman.project.airBnbApp.entity.Room;
 import com.aman.project.airBnbApp.entity.User;
 import com.aman.project.airBnbApp.entity.enums.BookingStatus;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -23,4 +24,5 @@ public class BookingDto {
 	private LocalDateTime updatedAt;
 	private BookingStatus bookingStatus;
 	private Set<GuestDto> guests;
+	private BigDecimal amount;
 }
