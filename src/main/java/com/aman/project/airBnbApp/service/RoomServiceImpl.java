@@ -1,5 +1,8 @@
 package com.aman.project.airBnbApp.service;
 
+import static com.aman.project.airBnbApp.util.AppUtils.getCurrentUser;
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
+
 import com.aman.project.airBnbApp.dto.RoomDto;
 import com.aman.project.airBnbApp.entity.Hotel;
 import com.aman.project.airBnbApp.entity.Room;
@@ -14,7 +17,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,7 +36,7 @@ public class RoomServiceImpl implements RoomService {
 			.findById(hotelId)
 			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + hotelId));
 
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 		if (!user.equals(hotel.getOwner())) {
 			throw new UnAuthorisedException("This user does not own this hotel with id: " + hotelId);
 		}
@@ -86,12 +88,38 @@ public class RoomServiceImpl implements RoomService {
 			.findById(roomId)
 			.orElseThrow(() -> new ResourceNotFoundException("Room not found with Id " + roomId));
 
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 		if (!user.equals(room.getHotel().getOwner())) {
 			throw new UnAuthorisedException("This user does not own this room with id: " + roomId);
 		}
 
 		inventoryService.deleteAllInventories(room);
 		roomRepository.deleteById(roomId);
+	}
+
+	@Override
+	@Transactional
+	public RoomDto updateRoomById(Long hotelId, Long roomId, RoomDto roomDto) {
+		log.info("updating the room with ID: {}", roomId);
+		Hotel hotel = hotelRepository
+			.findById(hotelId)
+			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + id));
+		// update
+		User user = getCurrentUser();
+
+		if (!user.equals(hotel.getOwner())) {
+			throw new UnAuthorisedException("This user does not own this hotel with id: " + id);
+		}
+
+		Room room = roomRepository
+			.findById(roomId)
+			.orElseThrow(() -> new ResourceNotFoundException("Room not found with Id " + roomId));
+		modelMapper.map(roomDto, room);
+		room.setId(roomId);
+
+		// TODO: if price or inventory is updated, then update the inventory for this room
+
+		room = roomRepository.save(room);
+		return modelMapper.map(room, RoomDto.class);
 	}
 }

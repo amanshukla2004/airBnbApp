@@ -49,6 +49,8 @@ public class WebSecurityConfig {
 					.anonymous()
 					.requestMatchers("/booking/**")
 					.authenticated()
+					.requestMatchers("/users/**")
+					.authenticated()
 					.anyRequest()
 					.permitAll()
 			)

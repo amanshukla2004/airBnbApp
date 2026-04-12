@@ -5,11 +5,9 @@ import java.time.LocalDate;
 import lombok.Data;
 
 @Data
-public class UserDto {
+public class ProfileUpdateRequestDto {
 
-	private String email;
-	private Long id;
 	private String name;
-	private Gender gender;
 	private LocalDate dateOfBirth;
+	private Gender gender;
 }

@@ -1,5 +1,7 @@
 package com.aman.project.airBnbApp.service;
 
+import static com.aman.project.airBnbApp.util.AppUtils.getCurrentUser;
+
 import com.aman.project.airBnbApp.dto.HotelDto;
 import com.aman.project.airBnbApp.dto.HotelInfoDto;
 import com.aman.project.airBnbApp.dto.RoomDto;
@@ -127,5 +129,13 @@ public class HotelServiceImpl implements HotelService {
 			.map(element -> modelMapper.map(element, RoomDto.class))
 			.collect(Collectors.toList());
 		return new HotelInfoDto(modelMapper.map(hotel, HotelDto.class), rooms);
+	}
+
+	@Override
+	public List<HotelDto> getAllHotels() {
+		User user = getCurrentUser();
+		log.info("getting all Hotels with ID: {}", user.getId());
+		List<Hotel> hotels = hotelRepository.findByOwner(user);
+		return hotels.stream().map(element -> modelMapper.map(element, HotelDto.class)).collect(Collectors.toList());
 	}
 }

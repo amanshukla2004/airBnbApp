@@ -1,7 +1,9 @@
 package com.aman.project.airBnbApp.entity;
 
+import com.aman.project.airBnbApp.entity.enums.Gender;
 import com.aman.project.airBnbApp.entity.enums.Role;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
@@ -30,6 +32,11 @@ public class User implements UserDetails {
 	private String password; // encode it later bcrypt
 
 	private String name;
+
+	private LocalDate dateOfBirth;
+
+	@Enumerated(EnumType.STRING)
+	private Gender gender;
 
 	@ElementCollection(fetch = FetchType.EAGER) // ?
 	@Enumerated(EnumType.STRING)
