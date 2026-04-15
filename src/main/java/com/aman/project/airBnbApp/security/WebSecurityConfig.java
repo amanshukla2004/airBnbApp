@@ -1,9 +1,8 @@
 package com.aman.project.airBnbApp.security;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,10 +16,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
@@ -29,6 +32,9 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 public class WebSecurityConfig {
 
 	private final JwtAuthFilter jwtAuthFilter;
+
+	@Value("${frontend.url}")
+	private String frontendUrl;
 
 	// Question : for jwt exception we need a HandlerExceptionResolver
 	@Autowired
@@ -43,10 +49,13 @@ public class WebSecurityConfig {
 			.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(auth ->
 				auth
+					.requestMatchers(HttpMethod.OPTIONS).permitAll() // Explicitly permit preflight requests
 					.requestMatchers("/admin/**")
 					.hasRole("HOTEL_MANAGER")
-					.requestMatchers("/auth/**")
-					.anonymous()
+					.requestMatchers("/auth/**", "/public/**")
+					.permitAll()
+					.requestMatchers("/webhooks/**")
+					.permitAll()
 					.requestMatchers("/booking/**")
 					.authenticated()
 					.requestMatchers("/users/**")
@@ -54,10 +63,16 @@ public class WebSecurityConfig {
 					.anyRequest()
 					.permitAll()
 			)
-			.exceptionHandling(exHandingConfig -> exHandingConfig.accessDeniedHandler(accessDeniedHandler()));
-		// Question : read this
+			.exceptionHandling(exHandingConfig -> {
+				exHandingConfig.accessDeniedHandler(accessDeniedHandler());
+				exHandingConfig.authenticationEntryPoint((request, response, authException) -> {
+					handlerExceptionResolver.resolveException(request, response, null, authException);
+				});
+			});
 		return httpSecurity.build();
 	}
+
+
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {

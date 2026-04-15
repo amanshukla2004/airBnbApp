@@ -4,12 +4,17 @@ import com.aman.project.airBnbApp.service.BookingService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/webhooks")
@@ -23,20 +28,38 @@ public class WebhookController {
 	private String endpointSecret;
 
 	@PostMapping("/payment")
-	public ResponseEntity<Void> capturePayments(
-		@RequestBody String payload,
-		@RequestHeader("Stripe-Signature") String sigHeader
-	) {
+	public ResponseEntity<String> capturePayments(
+			HttpServletRequest request,
+			@RequestHeader("Stripe-Signature") String sigHeader) {
+		String payload;
 		try {
+			payload = StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			log.error("Failed to read Stripe webhook request body: {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unable to read request body");
+		}
+
+		if (sigHeader == null || sigHeader.isEmpty()) {
+			log.error("Missing Stripe-Signature header");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing Stripe-Signature header");
+		}
+
+		try {
+			log.info("Verifying Stripe Webhook event signature...");
 			Event event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+			log.info("Event verified successfully: {}", event.getType());
+
 			bookingService.capturePayment(event);
-			return ResponseEntity.noContent().build();
+
+			return ResponseEntity.ok("Success");
 		} catch (SignatureVerificationException e) {
-			log.error("Stripe signature verification failed", e);
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			log.error("Stripe signature verification failed: {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
 		} catch (Exception e) {
-			log.error("Internal error processing webhook", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+			log.error("Error processing Stripe webhook: {}", e.getMessage(), e);
+			// We return 200 even on internal processing errors to stop Stripe from retrying
+			// if we believe the error is persistent or was already logged.
+			return ResponseEntity.ok("Event received but processing failed: " + e.getMessage());
 		}
 	}
 }

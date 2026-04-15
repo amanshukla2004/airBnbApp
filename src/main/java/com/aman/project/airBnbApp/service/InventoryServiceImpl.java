@@ -45,6 +45,9 @@ public class InventoryServiceImpl implements InventoryService {
 		LocalDate endDate = today.plusYears(1);
 
 		for (; !today.isAfter(endDate); today = today.plusDays(1)) {
+			if (inventoryRepository.existsByRoomAndDate(room, today)) {
+				continue;
+			}
 			Inventory inventory = Inventory
 				.builder()
 				.hotel(room.getHotel())
@@ -154,8 +157,22 @@ public class InventoryServiceImpl implements InventoryService {
 			updateInventoryRequestDto.getStartDate(),
 			updateInventoryRequestDto.getEndDate(),
 			updateInventoryRequestDto.getClosed(),
-			updateInventoryRequestDto.getSurgeFactor()
+			updateInventoryRequestDto.getSurgeFactor(),
+			updateInventoryRequestDto.getPrice() // Passed the customized price
 		);
+	}
+
+	@Override
+	@Transactional
+	public void updateBasePriceForFutureOpenInventories(Long roomId, BigDecimal price, LocalDate startDate) {
+		log.info("Updating base price for future open inventories of room {} to {}", roomId, price);
+		inventoryRepository.updateBasePriceForFutureOpenInventories(roomId, price, startDate);
+	}
+
+	@Override
+	public void deleteHotelMinPriceEntries(Hotel hotel) {
+		log.info("Deleting HotelMinPrice entries for hotel with id: {}", hotel.getId());
+		hotelMinPriceRepository.deleteByHotel(hotel);
 	}
 }
 /*

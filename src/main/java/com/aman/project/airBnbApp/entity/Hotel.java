@@ -52,6 +52,6 @@ public class Hotel {
 	private User owner;
 
 	@JsonIgnore
-	@OneToMany(mappedBy = "hotel")
+	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Room> rooms;
 }

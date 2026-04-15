@@ -6,6 +6,7 @@ import com.aman.project.airBnbApp.dto.UserDto;
 import com.aman.project.airBnbApp.entity.User;
 import com.aman.project.airBnbApp.entity.enums.Role;
 import com.aman.project.airBnbApp.exception.ResourceNotFoundException;
+import com.aman.project.airBnbApp.exception.UnAuthorisedException;
 import com.aman.project.airBnbApp.repository.UserRepository;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +27,7 @@ public class AuthService {
 	private final AuthenticationManager authenticationManager;
 	private final JWTService jwtService;
 
-	public UserDto signUp(SignUpRequestDto signUpRequestDto) {
-		//
+	public UserDto signUpUser(SignUpRequestDto signUpRequestDto) {
 		User user = userRepository.findByEmail(signUpRequestDto.getEmail()).orElse(null);
 		if (user != null) {
 			throw new RuntimeException("User already exists with same email");
@@ -40,12 +40,41 @@ public class AuthService {
 		return modelMapper.map(newUser, UserDto.class);
 	}
 
-	public String[] login(LoginDto loginDto) {
+	public UserDto signUpManager(SignUpRequestDto signUpRequestDto) {
+		User user = userRepository.findByEmail(signUpRequestDto.getEmail()).orElse(null);
+		if (user != null) {
+			throw new RuntimeException("User already exists with same email");
+		}
+		User newUser = modelMapper.map(signUpRequestDto, User.class);
+		newUser.setRoles(Set.of(Role.HOTEL_MANAGER));
+		newUser.setPassword(passwordEncoder.encode(signUpRequestDto.getPassword()));
+		newUser = userRepository.save(newUser);
+
+		return modelMapper.map(newUser, UserDto.class);
+	}
+
+	public String[] loginUser(LoginDto loginDto) {
 		Authentication authentication = authenticationManager.authenticate(
 			new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
 		);
 		User user = (User) authentication.getPrincipal();
-		//
+		if (!user.getRoles().contains(Role.GUEST)) {
+			throw new UnAuthorisedException("Account type does not match the login portal");
+		}
+		String[] arr = new String[2];
+		arr[0] = jwtService.generateAccessToken(user);
+		arr[1] = jwtService.generateRefreshToken(user);
+		return arr;
+	}
+
+	public String[] loginManager(LoginDto loginDto) {
+		Authentication authentication = authenticationManager.authenticate(
+			new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
+		);
+		User user = (User) authentication.getPrincipal();
+		if (!user.getRoles().contains(Role.HOTEL_MANAGER)) {
+			throw new UnAuthorisedException("Account type does not match the login portal");
+		}
 		String[] arr = new String[2];
 		arr[0] = jwtService.generateAccessToken(user);
 		arr[1] = jwtService.generateRefreshToken(user);

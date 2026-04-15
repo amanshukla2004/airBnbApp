@@ -10,5 +10,6 @@ public class UpdateInventoryRequestDto {
 	private LocalDate startDate;
 	private LocalDate endDate;
 	private BigDecimal surgeFactor;
+	private BigDecimal price; // newly added
 	private Boolean closed;
 }

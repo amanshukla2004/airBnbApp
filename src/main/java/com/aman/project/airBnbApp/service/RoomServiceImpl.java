@@ -114,10 +114,16 @@ public class RoomServiceImpl implements RoomService {
 		Room room = roomRepository
 			.findById(roomId)
 			.orElseThrow(() -> new ResourceNotFoundException("Room not found with Id " + roomId));
+		boolean priceChanged = room.getBasePrice() != null && roomDto.getBasePrice() != null 
+			&& room.getBasePrice().compareTo(roomDto.getBasePrice()) != 0;
+
 		modelMapper.map(roomDto, room);
 		room.setId(roomId);
 
-		// TODO: if price or inventory is updated, then update the inventory for this room
+		// If price is updated, cascade the change to future unbooked inventory for this room
+		if (priceChanged) {
+			inventoryService.updateBasePriceForFutureOpenInventories(roomId, roomDto.getBasePrice(), java.time.LocalDate.now());
+		}
 
 		room = roomRepository.save(room);
 		return modelMapper.map(room, RoomDto.class);

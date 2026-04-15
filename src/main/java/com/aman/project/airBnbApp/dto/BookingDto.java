@@ -14,9 +14,8 @@ import lombok.Data;
 public class BookingDto {
 
 	private Long id;
-	//	private Hotel hotel;
-	//	private Room room;
-	//private User user;
+	private HotelDto hotel;
+	private RoomDto room;
 	private Integer roomCount;
 	private LocalDate checkInDate;
 	private LocalDate checkOutDate;

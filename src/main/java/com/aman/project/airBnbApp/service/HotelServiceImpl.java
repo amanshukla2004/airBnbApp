@@ -10,6 +10,7 @@ import com.aman.project.airBnbApp.entity.Room;
 import com.aman.project.airBnbApp.entity.User;
 import com.aman.project.airBnbApp.exception.ResourceNotFoundException;
 import com.aman.project.airBnbApp.exception.UnAuthorisedException;
+import com.aman.project.airBnbApp.repository.BookingRepository;
 import com.aman.project.airBnbApp.repository.HotelRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -28,6 +29,7 @@ public class HotelServiceImpl implements HotelService {
 	private final HotelRepository hotelRepository;
 	private final ModelMapper modelMapper;
 	private final InventoryService inventoryService;
+	private final BookingRepository bookingRepository;
 
 	@Override
 	public HotelDto createNewHotel(HotelDto hotelDto) {
@@ -36,7 +38,7 @@ public class HotelServiceImpl implements HotelService {
 		Hotel hotel = modelMapper.map(hotelDto, Hotel.class);
 		hotel.setActive(false);
 
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 		hotel.setOwner(user);
 		hotelRepository.save(hotel);
 		log.info("created NewHotel with ID: {}", hotelDto.getId());
@@ -51,7 +53,7 @@ public class HotelServiceImpl implements HotelService {
 			.findById(id)
 			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + id));
 
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 
 		if (!user.equals(hotel.getOwner())) {
 			throw new UnAuthorisedException("This user does not own this hotel with id: " + id);
@@ -67,7 +69,7 @@ public class HotelServiceImpl implements HotelService {
 			.findById(id)
 			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + id));
 		// update
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 
 		if (!user.equals(hotel.getOwner())) {
 			throw new UnAuthorisedException("This user does not own this hotel with id: " + id);
@@ -84,36 +86,41 @@ public class HotelServiceImpl implements HotelService {
 		Hotel hotel = hotelRepository
 			.findById(id)
 			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + id));
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 
 		if (!user.equals(hotel.getOwner())) {
 			throw new UnAuthorisedException("This user does not own this hotel with id: " + id);
 		}
 
-		hotelRepository.deleteById(id);
 		for (Room room : hotel.getRooms()) {
 			inventoryService.deleteAllInventories(room);
 		}
+		inventoryService.deleteHotelMinPriceEntries(hotel);
+		bookingRepository.deleteByHotel(hotel);
+
+		hotelRepository.delete(hotel);
 	}
 
 	@Override
 	@Transactional
-	public void activateHotel(Long id) {
-		log.info("activating the Hotel with ID: {}", id);
+	public void toggleHotelStatus(Long id) {
+		log.info("Toggling activation for Hotel with ID: {}", id);
 		Hotel hotel = hotelRepository
 			.findById(id)
 			.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with Id " + id));
-		hotel.setActive(true);
-		//assuming doing once
+		hotel.setActive(!hotel.getActive());
+		hotelRepository.save(hotel);
 
-		User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		User user = getCurrentUser();
 
 		if (!user.equals(hotel.getOwner())) {
 			throw new UnAuthorisedException("This user does not own this hotel with id: " + id);
 		}
 
-		for (Room room : hotel.getRooms()) {
-			inventoryService.initialiseRoomForAYear(room);
+		if (hotel.getActive()) {
+			for (Room room : hotel.getRooms()) {
+				inventoryService.initialiseRoomForAYear(room);
+			}
 		}
 	}
 

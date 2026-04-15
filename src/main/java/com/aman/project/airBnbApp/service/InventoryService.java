@@ -15,4 +15,8 @@ public interface InventoryService {
 	List<InventoryDto> getAllInventoryByRoom(Long roomId);
 
 	void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto);
+
+	void updateBasePriceForFutureOpenInventories(Long roomId, java.math.BigDecimal price, java.time.LocalDate startDate);
+
+	void deleteHotelMinPriceEntries(com.aman.project.airBnbApp.entity.Hotel hotel);
 }

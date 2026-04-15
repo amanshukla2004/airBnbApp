@@ -20,12 +20,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 	void deleteByRoom(Room room);
+ 
+	boolean existsByRoomAndDate(Room room, LocalDate date);
 
 	@Query(
 		"""
 			SELECT DISTINCT i.hotel
 			FROM Inventory i
-			WHERE i.city = :city
+			WHERE i.hotel.active = true
+				AND LOWER(i.city) = LOWER(:city)
 				AND i.date BETWEEN :startDate AND :endDate
 				AND i.closed = false
 				AND (i.totalCount - i.bookedCount - i.reservedCount) >= :roomsCount
@@ -176,13 +179,11 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 	@Query(
 		"""
                 UPDATE Inventory i
-                SET i.surgeFactor = :surgeFactor,
-                        i.closed = :closed
+                SET i.surgeFactor = COALESCE(:surgeFactor, i.surgeFactor),
+                        i.closed = COALESCE(:closed, i.closed),
+                        i.price = COALESCE(:price, i.price)
                 WHERE i.room.id = :roomId
                     AND i.date BETWEEN :startDate AND :endDate
-                    
-        
-        
         """
 	)
 	void updateInventory(
@@ -190,6 +191,23 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 		@Param("startDate") LocalDate startDate,
 		@Param("endDate") LocalDate endDate,
 		@Param("closed") Boolean closed,
-		@Param("surgeFactor") BigDecimal surgeFactor
+		@Param("surgeFactor") BigDecimal surgeFactor,
+		@Param("price") BigDecimal price
+	);
+
+	@Modifying
+	@Query(
+		"""
+                UPDATE Inventory i
+                SET i.price = :price
+                WHERE i.room.id = :roomId
+                    AND i.date >= :startDate
+                    AND i.bookedCount = 0
+        """
+	)
+	void updateBasePriceForFutureOpenInventories(
+		@Param("roomId") Long roomId,
+		@Param("price") BigDecimal price,
+		@Param("startDate") LocalDate startDate
 	);
 }

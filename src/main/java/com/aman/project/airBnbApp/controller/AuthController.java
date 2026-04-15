@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -25,22 +27,50 @@ public class AuthController {
 
 	private final AuthService authService;
 
-	@PostMapping("/signup")
-	public ResponseEntity<UserDto> signup(@RequestBody SignUpRequestDto signUpRequestDto) {
-		return new ResponseEntity<>(authService.signUp(signUpRequestDto), HttpStatus.CREATED);
+	/**
+	 * Register a standard User.
+	 */
+	@PostMapping("/user/register")
+	public ResponseEntity<UserDto> registerUser(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
+		return new ResponseEntity<>(authService.signUpUser(signUpRequestDto), HttpStatus.CREATED);
 	}
 
-	@PostMapping("/login")
-	public ResponseEntity<LoginResponseDto> login(
-		@RequestBody LoginDto loginDto,
-		HttpServletRequest httpServletRequest,
+	/**
+	 * Login as a standard User.
+	 */
+	@PostMapping("/user/login")
+	public ResponseEntity<LoginResponseDto> loginUser(
+		@Valid @RequestBody LoginDto loginDto,
 		HttpServletResponse httpServletResponse
 	) {
-		String[] tokens = authService.login(loginDto);
-		//
+		String[] tokens = authService.loginUser(loginDto);
 		Cookie cookie = new Cookie("refreshToken", tokens[1]);
 		cookie.setHttpOnly(true);
-		//
+		cookie.setPath("/");
+		httpServletResponse.addCookie(cookie);
+		return ResponseEntity.ok(new LoginResponseDto(tokens[0]));
+	}
+
+	/**
+	 * Register a Hotel Manager.
+	 */
+	@PostMapping("/manager/register")
+	public ResponseEntity<UserDto> registerManager(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
+		return new ResponseEntity<>(authService.signUpManager(signUpRequestDto), HttpStatus.CREATED);
+	}
+
+	/**
+	 * Login as a Hotel Manager.
+	 */
+	@PostMapping("/manager/login")
+	public ResponseEntity<LoginResponseDto> loginManager(
+		@Valid @RequestBody LoginDto loginDto,
+		HttpServletResponse httpServletResponse
+	) {
+		String[] tokens = authService.loginManager(loginDto);
+		Cookie cookie = new Cookie("refreshToken", tokens[1]);
+		cookie.setHttpOnly(true);
+		cookie.setPath("/");
 		httpServletResponse.addCookie(cookie);
 		return ResponseEntity.ok(new LoginResponseDto(tokens[0]));
 	}

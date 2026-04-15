@@ -40,6 +40,13 @@ public class CheckoutServiceImpl implements CheckoutService {
 				.setCustomer(customer.getId())
 				.setSuccessUrl(successUrl)
 				.setCancelUrl(failureUrl)
+				.putMetadata("bookingId", booking.getId().toString())
+				.setPaymentIntentData(
+					SessionCreateParams.PaymentIntentData
+						.builder()
+						.putMetadata("bookingId", booking.getId().toString())
+						.build()
+				)
 				.addLineItem(
 					SessionCreateParams.LineItem
 						.builder()
