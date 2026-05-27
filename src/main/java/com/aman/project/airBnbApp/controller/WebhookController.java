@@ -29,15 +29,8 @@ public class WebhookController {
 
 	@PostMapping("/payment")
 	public ResponseEntity<String> capturePayments(
-			HttpServletRequest request,
+			@RequestBody String payload,
 			@RequestHeader("Stripe-Signature") String sigHeader) {
-		String payload;
-		try {
-			payload = StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			log.error("Failed to read Stripe webhook request body: {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unable to read request body");
-		}
 
 		if (sigHeader == null || sigHeader.isEmpty()) {
 			log.error("Missing Stripe-Signature header");

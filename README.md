@@ -1,6 +1,6 @@
-# 🏨 Airbnb Clone Backend (Spring Boot)
+# 🏨 Nox: Enterprise Hotel Management Platform (Spring Boot)
 
-A robust, enterprise-grade RESTful API serving as the backend for an Airbnb-style web application. It features comprehensive dual-role authentication (Guests vs. Hotel Managers), dynamic pricing algorithms, inventory management, and Stripe payment integration.
+A robust, enterprise-grade RESTful API serving as the backend for **Nox**, a premium hotel booking and management platform. It features comprehensive dual-role authentication (Guests vs. Hotel Managers), dynamic algorithmic pricing, granular inventory management, and hardened Stripe payment integration.
 
 ---
 
@@ -23,11 +23,14 @@ Separated pathways for **Users (GUESTS)** and **Property Owners (HOTEL_MANAGERS)
 ### 2. Advanced Algorithmic Pricing
 Includes a highly dynamic `HolidayPricingStrategy` that intercepts queries and actively surges prices (e.g., 25% inflation) for configured major calendar holidays or weekends. Base prices can be managed at the `Room` level and cascade forward to specific Unbooked dates natively.
 
-### 3. Granular Inventory Management
-Managers can configure properties, map complex amenity lists, define base room models, and individually tailor **daily surge factors** or close off specific dates from being purchased without affecting the root structural parameters.
+### 3. Granular Inventory Management & Cascading Integrity
+Managers can configure properties, map complex amenity lists, define base room models, and individually tailor **daily surge factors**. The system ensures physical data integrity through cascading deletions—removing a property automatically handles associated unconfirmed bookings and inventory blocks.
 
-### 4. Concurrency & Booking Safe-Guards
-Built using exact **Pessimistic Writing Locks** (`LockModeType.PESSIMISTIC_WRITE`) alongside native SQL `COALESCE` handling to ensure simultaneous bookings on high-traffic variants physically cannot exceed the actual physical capacity limits of a room.
+### 4. Case-Insensitive Global Search
+The platform implements normalized city-based searching, allowing users to find properties regardless of character casing (e.g., "MUMBAI", "Mumbai", and "mumbai" all yield the same high-performance results).
+
+### 5. Concurrency & Booking Safe-Guards
+Built using exact **Pessimistic Writing Locks** (`LockModeType.PESSIMISTIC_WRITE`) alongside native SQL `COALESCE` handling to ensure simultaneous bookings on high-traffic variants physically cannot exceed the actual physical capacity limits. Bookings are staged with a **10-minute auto-expiry** to free up held inventory.
 
 ### 5. Automated Guest Management 
 Authorized users can register, assign, update, and manage persistent profiles for their frequent travel guests (family/friends), assigning them to Bookings seamlessly.

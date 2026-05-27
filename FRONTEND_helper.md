@@ -1,4 +1,4 @@
-# 🚀 Comprehensive Frontend Integration Guide
+# 🚀 Comprehensive Nox Platform Frontend Integration Guide
 
 This document maps all the API endpoints, exact data shapes, global configurations, and validation rules to help you wire up the frontend efficiently and robustly without guesswork.
 
@@ -101,7 +101,7 @@ When fetching any profile, it returns:
   - **Res Body**: Returns the saved Guest with assigned `"id"`.
 - **`GET /api/v1/guests`**: Returns `List<GuestDto>`.
 - **`PUT /api/v1/guests/{guestId}`**: Submit full Guest details.
-- **`DELETE /api/v1/guests/{guestId}`**: Returns 204 No Content.
+- **`DELETE /api/v1/guests/{guestId}`**: Returns 204 No Content. Note: If a guest has active bookings, deletion might be restricted by the system to maintain audit trails.
 
 ---
 
@@ -109,8 +109,15 @@ When fetching any profile, it returns:
 *Public discovery endpoints.*
 
 - **`GET /api/v1/hotels/search`**
-  - **Query Params**: `?city=Mumbai&startDate=2026-05-10&endDate=2026-05-15&roomsCount=1&page=0&size=10`
-  - **Returns**: A Spring Data paginated wrapper containing `HotelDto`s.
+  - **Query Params**: `?city=mumbai&startDate=2026-05-10&endDate=2026-05-15&roomsCount=1&page=0&size=10`
+  - **Behavior**: The `city` parameter is **case-insensitive**.
+  - **Returns**: A Spring Data paginated wrapper containing `HotelPriceDto` objects.
+  ```json
+  {
+    "hotel": { "...HotelDto..." },
+    "price": 125.50  // The calculated average nightly rate after dynamic surges
+  }
+  ```
 - **`GET /api/v1/hotels/{hotelId}/info`**
   - **Returns**: Combines Hotel specs and nested Rooms:
   ```json
@@ -135,13 +142,15 @@ When fetching any profile, it returns:
      "roomsCount": 1
    }
    ```
+   - **Res Body**: Returns a `BookingDto` including the final calculated `amount`. This amount includes all dynamic factors (Holiday Surges, Weekend Pricing, etc.).
+   - **Expiry**: Bookings created in Stage 1 expire after **10 minutes** if not moved to Stage 2.
 3. **`POST /api/v1/bookings/{bookingId}/addGuests`**: Attach saved `guestIds`.
    - **Req Body**: `[ 4, 7, 9 ]`
 4. **`POST /api/v1/bookings/{bookingId}/payments`**: Stage 2 (Starts Stripe Intent).
    - **Returns**: A Stripe Checkout Session URL. Redirect the user to this URL for payment.
 5. **`POST /api/v1/bookings/{bookingId}/cancel`**: Trigger abort logic.
 6. **`POST /api/v1/bookings/{bookingId}/status`**: 
-   - **Polling Endpoint**: Use this to check the booking status after the user returns from the Stripe payment page.
+   - **Polling Endpoint**: Use this to check the booking status after the user returns from the Stripe payment page. It returns the raw enum string.
    - **Returns**: A JSON object containing the status string:
      ```json
      { "status": "CONFIRMED" }
@@ -190,7 +199,7 @@ When fetching any profile, it returns:
 {
   "id": 10,
   "type": "DELUXE",
-  "basePrice": 150.00, // Changing this cascades to ALL future unbooked inventories automatically!
+  "basePrice": 150.00, // Changing this cascades to ALL future *unbooked and unoverridden* inventories automatically!
   "photos": ["image.jpg"],
   "amenities": ["AC", "MINIBAR"],
   "totalCount": 10, // Max quantity of this room type

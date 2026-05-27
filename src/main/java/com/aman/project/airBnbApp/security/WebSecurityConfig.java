@@ -44,6 +44,7 @@ public class WebSecurityConfig {
 	@Bean
 	public SecurityFilterChain springFilterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.csrf(csrfConfig -> csrfConfig.disable())
 			.sessionManagement(sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -91,5 +92,21 @@ public class WebSecurityConfig {
 		return (request, response, accessDeniedException) -> {
 			handlerExceptionResolver.resolveException(request, response, null, accessDeniedException);
 		};
+	}
+
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		// Allow the frontend URL from application.properties
+		configuration.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173", "http://127.0.0.1:5173"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+		configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
+		configuration.setAllowCredentials(true);
+		configuration.setExposedHeaders(List.of("Authorization")); // If you need to read headers in frontend
+		configuration.setMaxAge(3600L);
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
 	}
 }

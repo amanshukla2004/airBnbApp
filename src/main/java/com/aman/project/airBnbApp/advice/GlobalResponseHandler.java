@@ -27,7 +27,7 @@ public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
 		ServerHttpRequest request,
 		ServerHttpResponse response
 	) {
-		List<String> allowedRoutes = List.of("/v3/api-docs", "/actuator");
+		List<String> allowedRoutes = List.of("/v3/api-docs", "/actuator", "/webhooks");
 		boolean isAllowed = allowedRoutes.stream().anyMatch(route -> request.getURI().getPath().contains(route));
 		if (body instanceof ApiResponse<?> || isAllowed) {
 			return body;
