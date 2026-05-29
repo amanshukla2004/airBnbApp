@@ -7,5 +7,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/airBnbApp-0.0.1-SNAPSHOT.jar app.jar
+COPY entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
 EXPOSE 9091
-ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
+ENTRYPOINT ["./entrypoint.sh"]
