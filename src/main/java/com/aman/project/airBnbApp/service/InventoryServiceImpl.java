@@ -44,8 +44,15 @@ public class InventoryServiceImpl implements InventoryService {
 		LocalDate today = LocalDate.now();
 		LocalDate endDate = today.plusYears(1);
 
+		// Fetch existing inventory dates in one query to prevent N+1 queries
+		java.util.Set<LocalDate> existingDates = inventoryRepository.findByRoomOrderByDate(room).stream()
+				.map(Inventory::getDate)
+				.collect(Collectors.toSet());
+
+		java.util.List<Inventory> inventoriesToSave = new java.util.ArrayList<>();
+
 		for (; !today.isAfter(endDate); today = today.plusDays(1)) {
-			if (inventoryRepository.existsByRoomAndDate(room, today)) {
+			if (existingDates.contains(today)) {
 				continue;
 			}
 			Inventory inventory = Inventory
@@ -62,7 +69,12 @@ public class InventoryServiceImpl implements InventoryService {
 				.closed(false)
 				.build();
 
-			inventoryRepository.save(inventory);
+			inventoriesToSave.add(inventory);
+		}
+
+		// Save all records in one batch trip to the database
+		if (!inventoriesToSave.isEmpty()) {
+			inventoryRepository.saveAll(inventoriesToSave);
 		}
 	}
 
