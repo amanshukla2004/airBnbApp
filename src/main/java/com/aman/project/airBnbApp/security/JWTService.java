@@ -20,7 +20,7 @@ public class JWTService {
 		return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
 	}
 
-	//
+	// 
 	public String generateAccessToken(User user) {
 		return Jwts
 			.builder()
@@ -33,7 +33,7 @@ public class JWTService {
 			.compact();
 	}
 
-	//
+	// 
 	public String generateRefreshToken(User user) {
 		return Jwts
 			.builder()
@@ -44,7 +44,7 @@ public class JWTService {
 			.compact();
 	}
 
-	//
+	// 
 	public Long getUserIdFromToken(String token) {
 		Claims claims = Jwts.parser().verifyWith(getSecretKey()).build().parseSignedClaims(token).getPayload();
 		return Long.valueOf(claims.getSubject());

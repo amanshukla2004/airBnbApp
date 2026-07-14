@@ -1,113 +1,166 @@
-# 🏨 Nox: Enterprise Hotel Management Platform (Spring Boot)
+# 🏨 Roomly — Hotel Booking & Management Backend
 
-A robust, enterprise-grade RESTful API serving as the backend for **Nox**, a premium hotel booking and management platform. It features comprehensive dual-role authentication (Guests vs. Hotel Managers), dynamic algorithmic pricing, granular inventory management, and hardened Stripe payment integration.
-
----
-
-## 🛠️ Tech Stack & Technologies
-*   **Java 21 & Spring Boot 3.x**
-*   **Spring Data JPA / Hibernate** (Data persistence and strict locking)
-*   **Spring Security & JWT** (Stateless authentication with HttpOnly cookies)
-*   **PostgreSQL** (Relational database)
-*   **Stripe SDK** (Payment processing & webhook intent handling)
-*   **Lombok & ModelMapper** (Boilerplate reduction and object serialization)
-*   **Jakarta Validation** (Strict payload validation and boundary checks)
+A modern Spring Boot backend for a premium hotel booking platform with secure authentication, room inventory management, dynamic pricing, guest handling, and Stripe-powered payments.
 
 ---
 
-## 🔥 Key Features
+## ✨ Overview
 
-### 1. Dual-Portal Authentication 
-Separated pathways for **Users (GUESTS)** and **Property Owners (HOTEL_MANAGERS)**. The architecture employs strict Role-Based Access Control (RBAC), automatically preventing unauthorized access between domains. Uses short-lived Access Tokens + persistent HttpOnly Refresh Tokens.
+This project is a full-featured backend for a hotel booking ecosystem. It supports guest and manager flows, secure API access, booking orchestration, room inventory control, and payment processing through Stripe.
 
-### 2. Advanced Algorithmic Pricing
-Includes a highly dynamic `HolidayPricingStrategy` that intercepts queries and actively surges prices (e.g., 25% inflation) for configured major calendar holidays or weekends. Base prices can be managed at the `Room` level and cascade forward to specific Unbooked dates natively.
+---
 
-### 3. Granular Inventory Management & Cascading Integrity
-Managers can configure properties, map complex amenity lists, define base room models, and individually tailor **daily surge factors**. The system ensures physical data integrity through cascading deletions—removing a property automatically handles associated unconfirmed bookings and inventory blocks.
+## 🚀 Key Features
 
-### 4. Case-Insensitive Global Search
-The platform implements normalized city-based searching, allowing users to find properties regardless of character casing (e.g., "MUMBAI", "Mumbai", and "mumbai" all yield the same high-performance results).
+- 🔐 Role-based authentication for guests and hotel managers
+- 🏡 Hotel discovery, property management, and booking workflows
+- 📦 Inventory and room-level management
+- 💰 Dynamic pricing strategies for holidays, weekends, and demand surges
+- 🧾 Stripe payment intent and webhook support
+- 📚 Swagger/OpenAPI documentation
+- 🛡️ Centralized exception handling and structured API responses
 
-### 5. Concurrency & Booking Safe-Guards
-Built using exact **Pessimistic Writing Locks** (`LockModeType.PESSIMISTIC_WRITE`) alongside native SQL `COALESCE` handling to ensure simultaneous bookings on high-traffic variants physically cannot exceed the actual physical capacity limits. Bookings are staged with a **10-minute auto-expiry** to free up held inventory.
+---
 
-### 5. Automated Guest Management 
-Authorized users can register, assign, update, and manage persistent profiles for their frequent travel guests (family/friends), assigning them to Bookings seamlessly.
+## 🏗️ System Architecture
+
+```mermaid
+flowchart LR
+    A[🌐 Client / Frontend] --> B[🎮 Controllers]
+    B --> C[⚙️ Services]
+    C --> D[(🗄️ PostgreSQL)]
+    C --> E[🔐 JWT Security]
+    C --> F[💳 Stripe]
+    C --> G[📈 Pricing Strategy]
+
+    classDef client fill:#2563eb,stroke:#1d4ed8,color:#ffffff,stroke-width:2px;
+    classDef controller fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px;
+    classDef service fill:#0f766e,stroke:#115e59,color:#ffffff,stroke-width:2px;
+    classDef db fill:#b45309,stroke:#92400e,color:#ffffff,stroke-width:2px;
+    classDef auth fill:#dc2626,stroke:#b91c1c,color:#ffffff,stroke-width:2px;
+    classDef stripe fill:#be185d,stroke:#9d174d,color:#ffffff,stroke-width:2px;
+    classDef pricing fill:#059669,stroke:#047857,color:#ffffff,stroke-width:2px;
+
+    class A client;
+    class B controller;
+    class C service;
+    class D db;
+    class E auth;
+    class F stripe;
+    class G pricing;
+```
+
+```text
+┌───────────────────────────────┐
+│ 🌐 Client / Frontend          │
+└───────────────┬───────────────┘
+                │ HTTPS
+                ▼
+┌───────────────────────────────┐
+│ 🎮 Controllers / REST API     │
+│ Auth • Hotel • Booking • User│
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ ⚙️ Services & Business Logic │
+│ Pricing • Inventory • Auth   │
+└───────┬──────────────┬────────┘
+        │              │
+        ▼              ▼
+┌──────────────────┐  ┌──────────────────┐
+│ 🗄️ PostgreSQL    │  │ 💳 Stripe / Webhooks │
+└──────────────────┘  └──────────────────┘
+```
+
+---
+
+## 🛠️ Tech Stack
+
+- Java 21
+- Spring Boot 4.x
+- Spring Web MVC
+- Spring Security + JWT
+- Spring Data JPA / Hibernate
+- PostgreSQL
+- Stripe Java SDK
+- Lombok + ModelMapper
+- Springdoc OpenAPI / Swagger UI
+
+---
+
+## 📁 Project Structure
+
+```text
+src/
+├── main/
+│   ├── java/com/aman/project/airBnbApp/
+│   │   ├── advice/          # Global exception and response handling
+│   │   ├── config/          # Swagger, mapper, Stripe, and app config
+│   │   ├── controller/      # REST controllers for auth, hotels, bookings, users
+│   │   ├── dto/             # Request/response DTOs
+│   │   ├── entity/          # JPA entities and enums
+│   │   ├── repository/      # Database access layer
+│   │   ├── security/        # JWT auth, filters, and security helpers
+│   │   ├── service/         # Business logic layer
+│   │   └── strategy/        # Pricing strategies
+│   └── resources/
+│       ├── application.properties
+│       └── application-prod.properties
+└── test/java/               # Test suite
+```
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-*   **JavaJDK 21+**
-*   **Maven**
-*   **PostgreSQL** Database running at `localhost:5432`
 
-### Installation & Execution
+- Java 21+
+- Maven
+- PostgreSQL running locally
 
-1.  **Configure Database:** Ensure PostgreSQL is active. Update your credentials in `src/main/resources/application.properties` if they differ from the defaults:
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/airBnb
-    spring.datasource.username=postgres
-    spring.datasource.password=password
-    ```
+### 1) Configure the database
 
-2.  **Stripe Environment Vars:** Apply your Stripe API keys to process real intent payments.
-    ```properties
-    stripe.secret.key=sk_test_...
-    stripe.webhook.secret=whsec_...
-    ```
+Update the settings in [src/main/resources/application.properties](src/main/resources/application.properties):
 
-3.  **Compile the Project:**
-    Open the terminal at the root directory and execute Maven to compile and resolve dependencies.
-    ```bash
-    ./mvnw clean compile
-    ```
-
-4.  **Run the Spring Application:**
-    Boot the app locally across port `9091`.
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-
----
-
-## 🧩 Project Architectural Layout
-
-```text
-src/
- ├─ main/
- │   ├─ java/com/aman/project/airBnbApp/
- │   │   ├─ advice/        # Centralized ApiError and GlobalExceptionHandler triggers
- │   │   ├─ controller/    # All REST Endpoint exposure (Split by Domain)
- │   │   ├─ dto/           # Safe Data Transfer Objects restricting raw Entity access
- │   │   ├─ entity/        # Direct JPA SQL Mappings & Enum structures
- │   │   ├─ repository/    # Direct DB execution, heavily custom SQL @Query mapping
- │   │   ├─ security/      # JWT Filter Chains & AuthService Logic 
- │   │   ├─ service/       # The Business Logic Layer (RoomService, InventoryService)
- │   │   └─ strategy/      # Design pattern configurations for dynamic pricing (Holiday surges)
- │   └─ resources/
- │       └─ application.properties  # Central configuration file
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/airBnb
+spring.datasource.username=postgres
+spring.datasource.password=password
 ```
 
----
+### 2) Run the application
 
-## 🔗 Frontend Guide
-
-If you are developing the client-side UI, please reference the dedicated `FRONTEND_helper.md` located in the root directory. It contains granular API mapping, exact enum spellings, JSON payload constraints, and `ApiError` shapes to optimize Axios/Fetch hookups.
-
----
-
-## 🛡️ Exception Handling
-Instead of throwing generic HTML Spring errors, all exceptions (Authentication errors, 404 Not Found, Role checks) are caught by the `@RestControllerAdvice` and parsed into a clean JSON layout:
-```json
-{
-  "timeStamp": "2026-04..."
-  "data": null,
-  "error": {
-    "status": "UNAUTHORIZED",
-    "message": "Token has expired."
-  }
-}
+```bash
+./mvnw clean compile
+./mvnw spring-boot:run
 ```
+
+The backend will start on:
+
+- Port: 9091
+- Base API path: /api/v1
+
+### 3) Explore the API
+
+Swagger UI is available at:
+
+- http://localhost:9091/api/v1/swagger-ui/index.html
+
+---
+
+## ⚙️ Important Notes
+
+- JWT-based authentication is configured in [src/main/resources/application.properties](src/main/resources/application.properties).
+- Stripe keys can be supplied through environment variables when available.
+- For production, secrets should be stored securely and database settings should be reviewed carefully.
+
+---
+
+## 🔗 Useful References
+
+- Frontend integration guidance: [FRONTEND_helper.md](FRONTEND_helper.md)
+- API and enum notes: [HELP.md](HELP.md)
+
+If you want, the next step can be to add endpoint examples, sample payloads, or a contributor section.
