@@ -1,4 +1,4 @@
-# 🚀 Comprehensive Nox Platform Frontend Integration Guide
+# 🚀 Comprehensive ROOMLY Platform Frontend Integration Guide
 
 This document maps all the API endpoints, exact data shapes, global configurations, and validation rules to help you wire up the frontend efficiently and robustly without guesswork.
 

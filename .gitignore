@@ -74,3 +74,6 @@ pnpm-debug.log*
 # Ignore the architectural blueprints since backend is complete
 directives/
 AGENT.md
+
+
+FRONTEND_helper.md
